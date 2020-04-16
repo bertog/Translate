@@ -1,0 +1,40 @@
+{
+    "name": "thenonsensefactory/translate",
+    "description": "A little package to translate what you need in a model and provide to the user the translate field following the App Locale",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Guido Bertolino",
+            "email": "guido@thenonsensefactory.it",
+            "homepage": "https://www.thenonsensefactory.it"
+        }
+    ],
+    "homepage": "https://github.com/bertog/Translate.git",
+    "keywords": ["Laravel", "Translate"],
+    "require": {
+        "illuminate/support": "~5|~6|~7"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.0",
+        "mockery/mockery": "^1.1",
+        "orchestra/testbench": "~3|~4",
+        "sempro/phpunit-pretty-print": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "TheNonsenseFactory\\Translate\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TheNonsenseFactory\\Translate\\Tests\\": "tests"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "TheNonsenseFactory\\Translate\\TranslateServiceProvider"
+            ]
+        }
+    }
+}
