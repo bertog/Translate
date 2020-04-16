@@ -13,6 +13,9 @@ class TranslateServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+
+        $this->loadMigrationsFrom(__DIR__.'/../migrations/');
+
         if (! class_exists('CreateTranslationsTable')) {
             $timestamp = date('Y_m_d_His', time());
 

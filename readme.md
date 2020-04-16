@@ -17,10 +17,10 @@ $ composer require thenonsensefactory/translate
 
 ## Usage
 
-First publish the needed migration:
+First run the needed migration:
 
 ``` bash
-$ php artisan vendor:publish --provider='TheNonsenseFactory\Translate\TranslateServiceProvider' --tags="migrations"
+$ php artisan migrate
 ```
 And run the migration. Now your database have a new table called 'translations'
 
