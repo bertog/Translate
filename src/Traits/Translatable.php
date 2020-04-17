@@ -1,75 +1,81 @@
 <?php
 
 
-namespace TheNonsenseFactory\Translate\Traits {
+namespace TheNonsenseFactory\Translate\Traits;
 
 
-    use Illuminate\Support\Arr;
-    use Illuminate\Support\Facades\App;
-    use TheNonsenseFactory\Translate\Exceptions\AttributeNotTranslatableException;
-    use TheNonsenseFactory\Translate\Models\Translation;
+use Illuminate\Support\Facades\App;
+use TheNonsenseFactory\Translate\Exceptions\AttributeNotTranslatableException;
+use TheNonsenseFactory\Translate\Models\Translation;
 
-    trait Translatable
+trait Translatable
+{
+    public function translations()
     {
-        public function translations()
-        {
-            return $this->morphMany(Translation::class, 'translatable');
+        return $this->morphMany(Translation::class, 'translatable');
+    }
+
+    public function getAttribute($key)
+    {
+        if (in_array($key, $this->translatable)) {
+
+            $translation = $this->getTranslationByField($key);
+
+            return $translation ? $translation->text : parent::getAttribute($key);
         }
 
-        public function getAttribute($key)
-        {
-            if (in_array($key, $this->translatable)) {
+        return parent::getAttribute($key);
+    }
 
-                $translation = $this->getTranslationByField($key);
+    public function updateOrCreateTranslation($array)
+    {
+        $payload = collect($array)->mapWithKeys(function ($value, $key) {
 
-                return $translation ? $translation->text : parent::getAttribute($key);
-            }
+            if (!in_array($key, $this->translatable)) throw new AttributeNotTranslatableException();
 
-            return parent::getAttribute($key);
+            return [
+                'lang' => App::getLocale(),
+                'field' => $key,
+                'text' => $value,
+            ];
+        });
+
+        $translation = $this->getTranslationByField(key($array));
+
+        if (!$translation) {
+            return $this->translations()->create($payload->toArray());
         }
 
-        public function updateOrCreateTranslation($array)
-        {
-            $payload = collect($array)->mapWithKeys(function ($value, $key) {
+        return $translation->update($payload->toArray());
+    }
 
-                if (! in_array($key, $this->translatable)) throw new AttributeNotTranslatableException();
+    protected function getTranslationByField($field)
+    {
+        return $this->translations()->currentLang()->whereField($field)->first();
+    }
 
-                return [
-                    'lang' => App::getLocale(),
-                    'field' => $key,
-                    'text' => $value,
-                ];
-            });
-
-            $translation = $this->getTranslationByField(key($array));
-
-            if (! $translation) {
-                return $this->translations()->create($payload->toArray());
-            }
-
-            return $translation->update($payload->toArray());
-        }
-
-        protected function getTranslationByField($field) {
-            return $this->translations()->currentLang()->whereField($field)->first();
-        }
-
-        protected function getTranslationByLang() {
-            return $this->translations()->currentLang()->get();
-        }
+    protected function getTranslationByLang()
+    {
+        return $this->translations()->currentLang()->get();
+    }
 
 
-        public function toArray()
-        {
-            $array = parent::toArray();
+    public function toArray()
+    {
+        $array = parent::toArray();
 
-            foreach ($this->translatable as $key)
-            {
-                if (array_key_exists($key, $array)) {
-                    $array[$key] = $this->{$key};
+        $translations = $this->getTranslationByLang();
+
+        foreach ($this->translatable as $key) {
+            foreach ($translations as $translation) {
+                if ($translation->field == $key) {
+                    $array[$key] = $translation->text;
                 }
             }
-            return $array;
         }
+
+        return $array;
+
     }
+
 }

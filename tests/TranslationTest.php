@@ -178,4 +178,51 @@ class TranslationTest extends TestCase
 
     }
 
+    /** @test */
+    public function the_array_return_the_correct_translations_for_the_translatable_field()
+    {
+        $post = Post::create([
+            'title' => 'Titolo',
+            'body' => 'Body,'
+        ]);
+
+        $post->translations()->create([
+            'lang' => 'it',
+            'field' => 'title',
+            'text' => 'Titolo in Italiano'
+        ]);
+
+        $post->translations()->create([
+            'lang' => 'en',
+            'text' => 'Title in English',
+            'field' => 'title',
+        ]);
+
+        $post->translations()->create([
+            'lang' => 'it',
+            'field' => 'body',
+            'text' => 'Body in Italiano'
+        ]);
+
+        $post->translations()->create([
+            'lang' => 'en',
+            'field' => 'body',
+            'text' => 'Body in English'
+        ]);
+
+        App::setLocale('en');
+
+        $postArray = $post->toArray();
+
+        $this->assertEquals('Title in English', $postArray['title']);
+        $this->assertEquals('Body in English', $postArray['body']);
+
+        App::setLocale('it');
+
+        $postArray = $post->toArray();
+
+        $this->assertEquals('Titolo in Italiano', $postArray['title']);
+        $this->assertEquals('Body in Italiano', $postArray['body']);
+    }
+
 }
