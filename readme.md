@@ -22,7 +22,7 @@ First run the needed migration:
 ``` bash
 $ php artisan migrate
 ```
-And run the migration. Now your database have a new table called 'translations'
+Now your database have a new table called 'translations'
 
 In order to have a model Transatable add the relative Trait
 
