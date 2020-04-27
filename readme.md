@@ -58,11 +58,26 @@ To Save a new translation you can do in this way:
 
 ``` php
 
-article->translations()->create([
+$article->translations()->create([
         'lang' => 'en',
         'field' => 'title',
         'text' => 'My Fancy Title'
     ]);
+
+```
+
+To save multiple translations for the same model (es. in a store method of a Controller) you can use the storeMultipleTranslations method
+
+``` php
+
+$translations = [
+    'title' => [
+        'it' => 'Il mio bel titolo',
+        'en' => 'My fancy Title'
+    ]
+];
+
+$article->storeMultipleTranslations($translations);
 
 ```
 
