@@ -3,7 +3,6 @@
 
 namespace TheNonsenseFactory\Translate\Traits;
 
-
 use Illuminate\Support\Facades\App;
 use TheNonsenseFactory\Translate\Exceptions\AttributeNotTranslatableException;
 use TheNonsenseFactory\Translate\Models\Translation;
@@ -47,6 +46,26 @@ trait Translatable
         }
 
         return $translation->update($payload->toArray());
+    }
+
+    public function storeMultipleTranslations($translations)
+    {
+        $translationsGroup = collect($translations);
+
+        $translationsGroup->each(function ($translation, $field)  {
+
+            if (! in_array($field, $this->translatable)) throw new AttributeNotTranslatableException();
+
+            $singleTranslation = collect($translation);
+
+            $singleTranslation->each(function ($text, $lang) use ($field) {
+                $this->translations()->create([
+                    'lang' => $lang,
+                    'field' => $field,
+                    'text' => $text,
+                ]);
+            });
+        });
     }
 
     protected function getTranslationByField($field)

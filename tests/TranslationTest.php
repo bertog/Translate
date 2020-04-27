@@ -225,4 +225,59 @@ class TranslationTest extends TestCase
         $this->assertEquals('Body in Italiano', $postArray['body']);
     }
 
+    /** @test */
+    function it_can_store_multiple_translations()
+    {
+        $post = Post::create([
+            'title' => 'Titolo',
+            'body' => 'Body,'
+        ]);
+
+        $translations = [
+            'title' => [
+                'it' => 'Titolo',
+                'en' => 'Title'
+            ],
+            'body' => [
+                'it' => 'Body in italiano',
+                'en' => 'Body in english'
+            ]
+        ];
+
+        $post->storeMultipleTranslations($translations);
+
+        $this->assertDatabaseHas('translations', [
+            'lang' => 'it',
+            'field' => 'title',
+            'text' => 'Titolo',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+        $this->assertDatabaseHas('translations', [
+            'lang' => 'en',
+            'field' => 'title',
+            'text' => 'Title',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+        $this->assertDatabaseHas('translations', [
+            'lang' => 'it',
+            'field' => 'body',
+            'text' => 'Body in italiano',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+        $this->assertDatabaseHas('translations', [
+            'lang' => 'en',
+            'field' => 'body',
+            'text' => 'Body in english',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+    }
+
 }
