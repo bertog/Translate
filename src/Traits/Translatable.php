@@ -9,6 +9,7 @@ use TheNonsenseFactory\Translate\Models\Translation;
 
 trait Translatable
 {
+
     public function translations()
     {
         return $this->morphMany(Translation::class, 'translatable');
@@ -59,6 +60,12 @@ trait Translatable
             $singleTranslation = collect($translation);
 
             $singleTranslation->each(function ($text, $lang) use ($field) {
+                if ($this->checkTranslation(['lang' => $lang, 'field' => $field])) {
+                    $this->translations()->where(['lang' => $lang, 'field' => $field])
+                        ->update(['text' => $text]);
+                    return;
+                }
+
                 $this->translations()->create([
                     'lang' => $lang,
                     'field' => $field,
@@ -66,6 +73,11 @@ trait Translatable
                 ]);
             });
         });
+    }
+
+    public function createOrUpdateMultipleTranslations($translation)
+    {
+        $this->storeMultipleTranslations($translation);
     }
 
     protected function getTranslationByField($field)
@@ -76,6 +88,15 @@ trait Translatable
     protected function getTranslationByLang()
     {
         return $this->translations()->currentLang()->get();
+    }
+
+    public function checkTranslation(Array $translation)
+    {
+        if ($this->translations()->where($translation)->exists()) {
+            return true;
+        }
+
+        return false;
     }
 
 

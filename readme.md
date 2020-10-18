@@ -38,7 +38,8 @@ In order to have a model Transatable add the relative Trait
     }
 ```
 
-Then you have to declare what you need to translate in the $translatable array
+Then you have to declare what you need to translate in the $translatable array.
+This is a mandatory step.
 
 ``` php
 <?php
@@ -80,6 +81,16 @@ $translations = [
 $article->storeMultipleTranslations($translations);
 
 ```
+
+For sake of simplicity this method if found an existent translation it update the record.
+If you want to use a more specific o readable method yo can use:
+
+``` php
+
+$article->createOrUpdateMultipleTranslations($translations);
+
+```
+
 
 The magic came when you access to the field you have declared as Translatable. 
 The package return the translation in the current App language if present or fallback in the Model table data.
