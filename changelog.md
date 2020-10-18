@@ -2,6 +2,11 @@
 
 Changes to `Translate` so far.
 
+## Version 1.2.0
+
+- The multiple translations method now update the translation if exists.
+- Added the an alias method createOrUpdateMultipleTranslations()
+
 ## Version 1.1.0
 
 - Added a method to store multiple translations at once

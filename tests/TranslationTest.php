@@ -277,6 +277,150 @@ class TranslationTest extends TestCase
             'translatable_id' => $post->id,
             'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
         ]);
+    }
+
+    /** @test */
+    function it_create_multiple_translation_if_present_they_will_be_updated()
+    {
+        $post = Post::create([
+            'title' => 'Titolo',
+            'body' => 'Body,'
+        ]);
+
+        $translations = [
+            'title' => [
+                'it' => 'Titolo',
+                'en' => 'Title'
+            ],
+            'body' => [
+                'it' => 'Body in italiano',
+                'en' => 'Body in english'
+            ]
+        ];
+
+        $post->createOrUpdateMultipleTranslations($translations);
+
+        $this->assertDatabaseHas('translations', [
+            'lang' => 'it',
+            'field' => 'title',
+            'text' => 'Titolo',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+        $this->assertDatabaseHas('translations', [
+            'lang' => 'en',
+            'field' => 'title',
+            'text' => 'Title',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+        $this->assertDatabaseHas('translations', [
+            'lang' => 'it',
+            'field' => 'body',
+            'text' => 'Body in italiano',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+        $this->assertDatabaseHas('translations', [
+            'lang' => 'en',
+            'field' => 'body',
+            'text' => 'Body in english',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+        $editedTranslations = [
+            'title' => [
+                'it' => 'Titolo Edit',
+                'en' => 'Title Edit'
+            ],
+            'body' => [
+                'it' => 'Body in italiano edit',
+                'en' => 'Body in english edit'
+            ]
+        ];
+
+        $post->createOrUpdateMultipleTranslations($editedTranslations);
+
+        $this->assertDatabaseHas('translations', [
+            'lang' => 'it',
+            'field' => 'title',
+            'text' => 'Titolo Edit',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+        $this->assertDatabaseMissing('translations', [
+            'lang' => 'it',
+            'field' => 'title',
+            'text' => 'Titolo',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+        $this->assertDatabaseHas('translations', [
+            'lang' => 'en',
+            'field' => 'title',
+            'text' => 'Title Edit',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+        $this->assertDatabaseHas('translations', [
+            'lang' => 'it',
+            'field' => 'body',
+            'text' => 'Body in italiano edit',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+        $this->assertDatabaseHas('translations', [
+            'lang' => 'en',
+            'field' => 'body',
+            'text' => 'Body in english edit',
+            'translatable_id' => $post->id,
+            'translatable_type' => 'TheNonsenseFactory\Translate\Tests\Models\Post'
+        ]);
+
+    }
+
+    /** @test */
+    function it_check_if_a_specific_translation_exists()
+    {
+        $post = Post::create([
+            'title' => 'Titolo',
+            'body' => 'Body,'
+        ]);
+
+        $post->translations()->create([
+            'lang' => 'it',
+            'field' => 'title',
+            'text' => 'Titolo in Italiano'
+        ]);
+
+        $post->translations()->create([
+            'lang' => 'en',
+            'text' => 'Title in English',
+            'field' => 'title',
+        ]);
+
+        $needle = [
+            'lang' => 'en',
+            'field' => 'title',
+        ];
+
+        $this->assertTrue($post->checkTranslation($needle));
+
+        $needle = [
+            'lang' => 'es',
+            'field' => 'title',
+        ];
+
+        $this->assertFalse($post->checkTranslation($needle));
+
 
     }
 
