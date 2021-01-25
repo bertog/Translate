@@ -82,12 +82,17 @@ trait Translatable
 
     protected function getTranslationByField($field)
     {
-        return $this->translations()->currentLang()->whereField($field)->first();
+        return $this->translations()->where([
+            'field' => $field,
+            'lang' => App::getLocale()
+        ])->first();
     }
 
     protected function getTranslationByLang()
     {
-        return $this->translations()->currentLang()->get();
+        return $this->translations->filter(function ($translation) {
+            return $translation->lang == App::getLocale();
+        });
     }
 
     public function checkTranslation(Array $translation)
@@ -113,9 +118,6 @@ trait Translatable
                 }
             }
         }
-
         return $array;
-
     }
-
 }
