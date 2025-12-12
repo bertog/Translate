@@ -13,7 +13,7 @@
     "homepage": "https://github.com/bertog/Translate.git",
     "keywords": ["Laravel", "Translate", "Eloquent", "Model", "Localization", "Multilanguage Support"],
     "require": {
-        "illuminate/support": "~6|~7|~8|~9"
+        "illuminate/support": "~9|~10|~11|~12"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5.0",
