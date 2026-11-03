@@ -11,7 +11,7 @@ class Translation extends Model
 
     public function translatable()
     {
-        return $this->morphMany();
+        return $this->morphTo();
     }
 
     public function scopeCurrentLang($query)

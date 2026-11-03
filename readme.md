@@ -109,6 +109,23 @@ $article->title //Provide the it translation (if present)
 
 $article->title //Provide the title from the Articles Table
 ```
+To avoid one query for every translated attribute when you work with collections,
+eager load the translations: the package will read them from the loaded relation.
+
+``` php
+
+$articles = Article::with('translations')->get();
+
+foreach ($articles as $article) {
+    $article->title; // No extra queries
+}
+
+```
+
+If you write translations directly through the relation (`$article->translations()->create(...)`)
+after having loaded it, call `$article->load('translations')` to see the new values.
+The trait methods (`updateOrCreateTranslation`, `storeMultipleTranslations`) do it for you.
+
 You have a Query Scope and a useful help method
 
 ``` php

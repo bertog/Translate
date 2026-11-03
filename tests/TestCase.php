@@ -2,7 +2,6 @@
 
 namespace TheNonsenseFactory\Translate\Tests;
 
-use Illuminate\Database\Eloquent\Factory;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -36,7 +35,11 @@ abstract class TestCase extends Orchestra
             $table->timestamps();
         });
 
-
+        Schema::create('notes', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('title');
+            $table->timestamps();
+        });
     }
 
 }
