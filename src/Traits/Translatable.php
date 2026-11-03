@@ -1,6 +1,5 @@
 <?php
 
-
 namespace TheNonsenseFactory\Translate\Traits;
 
 use Illuminate\Support\Facades\App;
@@ -9,7 +8,6 @@ use TheNonsenseFactory\Translate\Models\Translation;
 
 trait Translatable
 {
-
     public function translations()
     {
         return $this->morphMany(Translation::class, 'translatable');
@@ -17,9 +15,8 @@ trait Translatable
 
     public function getAttribute($key)
     {
-        if (in_array($key, $this->translatable)) {
-
-            $translation = $this->getTranslationByField($key);
+        if (in_array($key, $this->getTranslatableAttributes(), true)) {
+            $translation = $this->getTranslationForCurrentLocale($key);
 
             return $translation ? $translation->text : parent::getAttribute($key);
         }
@@ -27,52 +24,66 @@ trait Translatable
         return parent::getAttribute($key);
     }
 
+    /**
+     * Create or update, in the current App locale, the translations for the given fields.
+     *
+     * Accepts an array shaped as field => text. With a single field it returns the
+     * created Translation or the boolean result of the update, as it always did.
+     * With more fields it returns the result for the last one.
+     */
     public function updateOrCreateTranslation($array)
     {
-        $payload = collect($array)->mapWithKeys(function ($value, $key) {
+        $array = (array) $array;
 
-            if (!in_array($key, $this->translatable)) throw new AttributeNotTranslatableException();
+        $this->ensureFieldsAreTranslatable(array_keys($array));
 
-            return [
+        $result = null;
+
+        foreach ($array as $field => $text) {
+            $payload = [
                 'lang' => App::getLocale(),
-                'field' => $key,
-                'text' => $value,
+                'field' => $field,
+                'text' => $text,
             ];
-        });
 
-        $translation = $this->getTranslationByField(key($array));
+            $translation = $this->getTranslationByField($field);
 
-        if (!$translation) {
-            return $this->translations()->create($payload->toArray());
+            $result = $translation
+                ? $translation->update($payload)
+                : $this->translations()->create($payload);
         }
 
-        return $translation->update($payload->toArray());
+        $this->forgetLoadedTranslations();
+
+        return $result;
     }
 
+    /**
+     * Store translations shaped as field => [lang => text], updating the existing ones.
+     */
     public function storeMultipleTranslations($translations)
     {
-        $translationsGroup = collect($translations);
+        $translations = collect($translations);
 
-        $translationsGroup->each(function ($translation, $field)  {
+        $this->ensureFieldsAreTranslatable($translations->keys()->all());
 
-            if (! in_array($field, $this->translatable)) throw new AttributeNotTranslatableException();
+        $this->getConnection()->transaction(function () use ($translations) {
+            $translations->each(function ($texts, $field) {
+                collect($texts)->each(function ($text, $lang) use ($field) {
+                    $attributes = ['lang' => $lang, 'field' => $field];
 
-            $singleTranslation = collect($translation);
+                    if ($this->checkTranslation($attributes)) {
+                        $this->translations()->where($attributes)->update(['text' => $text]);
 
-            $singleTranslation->each(function ($text, $lang) use ($field) {
-                if ($this->checkTranslation(['lang' => $lang, 'field' => $field])) {
-                    $this->translations()->where(['lang' => $lang, 'field' => $field])
-                        ->update(['text' => $text]);
-                    return;
-                }
+                        return;
+                    }
 
-                $this->translations()->create([
-                    'lang' => $lang,
-                    'field' => $field,
-                    'text' => $text,
-                ]);
+                    $this->translations()->create($attributes + ['text' => $text]);
+                });
             });
         });
+
+        $this->forgetLoadedTranslations();
     }
 
     public function createOrUpdateMultipleTranslations($translation)
@@ -84,7 +95,7 @@ trait Translatable
     {
         return $this->translations()->where([
             'field' => $field,
-            'lang' => App::getLocale()
+            'lang' => App::getLocale(),
         ])->first();
     }
 
@@ -95,29 +106,70 @@ trait Translatable
         });
     }
 
-    public function checkTranslation(Array $translation)
+    /**
+     * Read a translation from the loaded relation when available (eager loading),
+     * otherwise fall back to a query.
+     */
+    protected function getTranslationForCurrentLocale($field)
     {
-        if ($this->translations()->where($translation)->exists()) {
-            return true;
+        if (! $this->relationLoaded('translations')) {
+            return $this->getTranslationByField($field);
         }
 
-        return false;
+        $locale = App::getLocale();
+
+        return $this->getRelation('translations')->first(function ($translation) use ($field, $locale) {
+            return $translation->field == $field && $translation->lang == $locale;
+        });
     }
 
+    protected function getTranslatableAttributes()
+    {
+        // property_exists avoids going through __get, which would call getAttribute() again.
+        return property_exists($this, 'translatable') && is_array($this->translatable)
+            ? $this->translatable
+            : [];
+    }
+
+    protected function ensureFieldsAreTranslatable(array $fields)
+    {
+        $translatable = $this->getTranslatableAttributes();
+
+        foreach ($fields as $field) {
+            if (! in_array($field, $translatable, true)) {
+                throw new AttributeNotTranslatableException();
+            }
+        }
+    }
+
+    protected function forgetLoadedTranslations()
+    {
+        if ($this->relationLoaded('translations')) {
+            $this->unsetRelation('translations');
+        }
+    }
+
+    public function checkTranslation(Array $translation)
+    {
+        return $this->translations()->where($translation)->exists();
+    }
 
     public function toArray()
     {
         $array = parent::toArray();
 
-        $translations = $this->getTranslationByLang();
+        $translatable = $this->getTranslatableAttributes();
 
-        foreach ($this->translatable as $key) {
-            foreach ($translations as $translation) {
-                if ($translation->field == $key) {
-                    $array[$key] = $translation->text;
-                }
+        if (empty($translatable)) {
+            return $array;
+        }
+
+        foreach ($this->getTranslationByLang() as $translation) {
+            if (in_array($translation->field, $translatable, true)) {
+                $array[$translation->field] = $translation->text;
             }
         }
+
         return $array;
     }
 }
