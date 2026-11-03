@@ -21,11 +21,11 @@ jobs:
     name: Laravel ${{ matrix.laravel }} - PHP ${{ matrix.php }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: shivammathur/setup-php@v2
         with:
-          php: ${{ matrix.php }}
+          php-version: ${{ matrix.php }}
           extensions: pdo_sqlite
           coverage: none
 
@@ -34,6 +34,9 @@ jobs:
       - name: Allow end-of-life Laravel versions
         if: matrix.laravel < 12
         run: composer config policy.advisories.block false
+
+      - name: Show PHP version
+        run: php -v
 
       - name: Install dependencies
         run: composer update --no-interaction --prefer-dist --no-audit --with "laravel/framework:^${{ matrix.laravel }}.0"
